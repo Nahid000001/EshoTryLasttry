@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛍️ EshoTry - AI-Powered Fashion E-Commerce Platform
 
 A modern, professional e-commerce platform built with React, Django, and AI-powered features. Experience the future of fashion shopping with virtual try-on technology and personalized recommendations.
@@ -216,3 +217,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Made with ❤️ in London** 🇬🇧
 
 *EshoTry - Try Before You Buy, Anywhere in London*
+=======
+# EshoTryLasttry
+>>>>>>> 541d5e427eb4e883e98458daf462bdc3f6a54530
