@@ -1,0 +1,172 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: eshotry_postgres
+    environment:
+      POSTGRES_DB: eshotry
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - eshotry_network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: eshotry_mongodb
+    environment:
+      MONGO_INITDB_DATABASE: eshotry
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - eshotry_network
+
+  # Redis Cache
+  redis:
+    image: redis:7.0-alpine
+    container_name: eshotry_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eshotry_network
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: eshotry_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - eshotry_network
+
+  # Django Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eshotry_backend
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-here
+      - DB_HOST=postgres
+      - DB_NAME=eshotry
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - MONGODB_HOST=mongodb
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - elasticsearch
+    networks:
+      - eshotry_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eshotry_frontend
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - eshotry_network
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eshotry_celery_worker
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-here
+      - DB_HOST=postgres
+      - DB_NAME=eshotry
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - MONGODB_HOST=mongodb
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - elasticsearch
+    networks:
+      - eshotry_network
+    command: celery -A eshotry worker -l info
+
+  # Celery Beat (Scheduler)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eshotry_celery_beat
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-here
+      - DB_HOST=postgres
+      - DB_NAME=eshotry
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - MONGODB_HOST=mongodb
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - elasticsearch
+    networks:
+      - eshotry_network
+    command: celery -A eshotry beat -l info
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  elasticsearch_data:
+  media_volume:
+
+networks:
+  eshotry_network:
+    driver: bridge

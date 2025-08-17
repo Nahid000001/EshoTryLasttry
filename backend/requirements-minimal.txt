@@ -1,0 +1,42 @@
+# Minimal requirements for initial setup
+# Django and REST Framework
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.3
+djangorestframework-simplejwt==5.3.0
+
+# Database drivers
+psycopg2-binary==2.9.9
+pymongo==4.6.0
+redis>=4.5.2,<5.0.0
+django-redis==5.4.0
+
+# Authentication and Security
+PyJWT==2.8.0
+
+# Environment and configuration
+python-decouple==3.8
+
+# Task queue
+celery[redis]==5.3.4
+
+# API documentation
+drf-spectacular==0.26.5
+
+# Development tools
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
+
+# Image processing
+Pillow>=10.0.0
+
+# Utilities
+requests==2.31.0
+python-dateutil==2.8.2
+pytz==2023.3
